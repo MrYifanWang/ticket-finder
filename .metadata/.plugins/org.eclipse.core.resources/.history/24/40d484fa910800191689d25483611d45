@@ -71,7 +71,7 @@ ul {
  * main container
  */
 .container {
-	margin: 60px auto 30px auto;
+	margin: 70px auto 30px auto;
 	max-width: 1000px;
 	min-width: 600px;
 }

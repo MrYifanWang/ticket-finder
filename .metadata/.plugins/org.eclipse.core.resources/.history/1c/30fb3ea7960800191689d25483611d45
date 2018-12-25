@@ -254,7 +254,7 @@
       if (xhr.status === 200) {
         successCallback(xhr.responseText);
       } else {
-    	 errorCallback();
+        errorCallback();
       }
     };
 
@@ -485,6 +485,21 @@
     });
     category.innerHTML = 'Category: ' + item.categories.join(', ');
     section.appendChild(category);
+
+    for (var i = 0; i < item.rating; i++) {
+      var star = $create('i', {
+        className: 'fa fa-star'
+      });
+      stars.appendChild(star);
+    }
+
+    if (('' + item.rating).match(/\.5$/)) {
+      stars.appendChild($create('i', {
+        className: 'fa fa-star-half-o'
+      }));
+    }
+
+    section.appendChild(stars);
 
     li.appendChild(section);
 

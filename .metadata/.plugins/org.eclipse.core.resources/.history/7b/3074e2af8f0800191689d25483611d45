@@ -82,7 +82,7 @@ ul {
 .container>header {
 	align-items: center;
 	background:
-		url("http://folkartcarsi.com/img/4.jpg")
+		url("../images/bg.jpg")
 		no-repeat 50% 50%;
 	background-size: 100%;
 	display: flex;

@@ -18,7 +18,7 @@
     document.querySelector('#fav-btn').addEventListener('click', loadFavoriteItems);
     document.querySelector('#recommend-btn').addEventListener('click', loadRecommendedItems);
     validateSession();
-    //onSessionValid({"user_id":"1111","name":"John Smith","status":"OK"});
+    // onSessionValid({"user_id":"1111","name":"John Smith","status":"OK"});
   }
 
   /**
@@ -254,7 +254,7 @@
       if (xhr.status === 200) {
         successCallback(xhr.responseText);
       } else {
-    	 errorCallback();
+        errorCallback();
       }
     };
 
@@ -315,7 +315,6 @@
    * /history?user_id=1111
    */
   function loadFavoriteItems() {
-	console.log('loadFavoriteItems');
     activeBtn('fav-btn');
 
     // request parameters
@@ -344,7 +343,6 @@
    * /recommendation?user_id=1111
    */
   function loadRecommendedItems() {
-    console.log('loadRecommendedItems')
     activeBtn('recommend-btn');
 
     // request parameters
@@ -398,7 +396,7 @@
       // successful callback
       function(res) {
         var result = JSON.parse(res);
-        if (result.status === 'OK') {
+        if (result.status === 'OK' || result.result === 'SUCCESS') {
           li.dataset.favorite = favorite;
           favIcon.className = favorite ? 'fa fa-heart' : 'fa fa-heart-o';
         }
@@ -485,6 +483,26 @@
     });
     category.innerHTML = 'Category: ' + item.categories.join(', ');
     section.appendChild(category);
+
+    // stars
+    var stars = $create('div', {
+      className: 'stars'
+    });
+
+    for (var i = 0; i < item.rating; i++) {
+      var star = $create('i', {
+        className: 'fa fa-star'
+      });
+      stars.appendChild(star);
+    }
+
+    if (('' + item.rating).match(/\.5$/)) {
+      stars.appendChild($create('i', {
+        className: 'fa fa-star-half-o'
+      }));
+    }
+
+    section.appendChild(stars);
 
     li.appendChild(section);
 
