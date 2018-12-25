@@ -1,0 +1,249 @@
+package db.mysql;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import db.DBConnection;
+import entity.Item;
+import entity.Item.ItemBuilder;
+import external.TicketMasterAPI;
+
+public class MySQLConnection implements DBConnection {
+	private Connection connection;
+
+	public MySQLConnection() {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver").getConstructor().newInstance();
+			connection = DriverManager.getConnection(MySQLDBUtil.URL);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void close() {
+		if (connection != null) {
+			try {
+				connection.close();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Override
+	public void setFavoriteItems(String userId, List<String> itemIds) {
+		if (connection == null) {
+			System.out.println("DB connection failed.");
+			return;
+		}
+		try {
+			String sql = "INSERT IGNORE INTO history(user_id, item_id) VALUES (?, ?)";
+			PreparedStatement ps = connection.prepareStatement(sql);
+			ps.setString(1, userId);
+			for (String itemId : itemIds) {
+				ps.setString(2, itemId);
+				ps.execute();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public void unsetFavoriteItems(String userId, List<String> itemIds) {
+		if (connection == null) {
+			System.err.println("DB connection failed");
+			return;
+		}
+
+		try {
+			String sql = "DELETE FROM history WHERE user_id = ? AND item_id = ?";
+			PreparedStatement ps = connection.prepareStatement(sql);
+			ps.setString(1, userId);
+			for (String itemId : itemIds) {
+				ps.setString(2, itemId);
+				ps.execute();
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public Set<String> getFavoriteItemIds(String userId) {
+		if (connection == null) {
+			System.err.println("DB connection failed.");
+			return new HashSet<String>();
+		}
+		Set<String> favoriteItems = new HashSet<>();
+
+		try {
+			String sql = "SELECT  item_id FROM history WHERE user_id = ?";
+			PreparedStatement pStatement = connection.prepareStatement(sql);
+			pStatement.setString(1, userId);
+			ResultSet rSet = pStatement.executeQuery();
+			while (rSet.next()) {
+				favoriteItems.add(rSet.getString("item_id"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return favoriteItems;
+	}
+
+	@Override
+	public Set<Item> getFavoriteItems(String userId) {
+		if (connection == null) {
+			System.err.println("DB connection failed.");
+			return new HashSet<Item>();
+		}
+
+		Set<Item> favoriteItems = new HashSet<>();
+		Set<String> itemIds = getFavoriteItemIds(userId);
+		try {
+			String sql = "SELECT * FROM items WHERE item_id = ?";
+			PreparedStatement pStatement = connection.prepareStatement(sql);
+			for (String itemId : itemIds) {
+				pStatement.setString(1, itemId);
+				ResultSet rSet = pStatement.executeQuery();
+
+				ItemBuilder builder = new ItemBuilder();
+				while (rSet.next()) {
+					builder.setItemId(rSet.getString("item_id"));
+					builder.setName(rSet.getString("name"));
+					builder.setAddress(rSet.getString("address"));
+					builder.setImageUrl(rSet.getString("image_url"));
+					builder.setUrl(rSet.getString("url"));
+					builder.setCategories(getCategories(itemId));
+					builder.setDistance(rSet.getDouble("distance"));
+
+					favoriteItems.add(builder.build());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return favoriteItems;
+	}
+
+	@Override
+	public Set<String> getCategories(String itemId) {
+		if (connection == null) {
+			System.err.println("DB connection failed.");
+			return new HashSet<String>();
+		}
+		Set<String> categories = new HashSet<>();
+
+		try {
+			String sql = "SELECT category FROM categories WHERE item_id = ?";
+			PreparedStatement pStatement = connection.prepareStatement(sql);
+			pStatement.setString(1, itemId);
+			ResultSet rSet = pStatement.executeQuery();
+			while (rSet.next()) {
+				categories.add(rSet.getString("category"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return categories;
+	}
+
+	@Override
+	public List<Item> searchItems(double lat, double lon, String term) {
+		TicketMasterAPI tmAPI = new TicketMasterAPI();
+		List<Item> items = tmAPI.search(lat, lon, null);
+		for (Item item : items) {
+			saveItem(item);
+		}
+		return items;
+	}
+
+	@Override
+	public void saveItem(Item item) {
+		if (connection == null) {
+			System.out.println("DB connection failed.");
+		}
+
+		try {
+			String sql = "INSERT IGNORE INTO items VALUES (?,?,?,?,?,?)";
+			PreparedStatement pStatement;
+			pStatement = connection.prepareStatement(sql);
+			pStatement.setString(1, item.getItemId());
+			pStatement.setString(2, item.getName());
+			pStatement.setString(3, item.getAddress());
+			pStatement.setString(4, item.getImageUrl());
+			pStatement.setString(5, item.getUrl());
+			pStatement.setDouble(6, item.getDistance());
+			pStatement.execute();
+
+			sql = "INSERT IGNORE INTO categories VALUES(?, ?)";
+			pStatement = connection.prepareStatement(sql);
+			pStatement.setString(1, item.getItemId());
+			for (String category : item.getCategories()) {
+				pStatement.setString(2, category);
+				pStatement.execute();
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public String getFullname(String userId) {
+		if (connection == null) {
+			return "";
+		}
+
+		String name = "";
+		try {
+			String sql = "SELECT first_name, last_name FROM users WHERE user_id = ?";
+			PreparedStatement pStatement = connection.prepareStatement(sql);
+			pStatement.setString(1, userId);
+			ResultSet rs = pStatement.executeQuery();
+			if (rs.next()) {
+				name = rs.getString("first_name") + " " + rs.getString("last_name");
+			}
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+
+		return name;
+	}
+
+	@Override
+	public boolean verifyLogin(String userId, String password) {
+		if (connection == null) {
+			return false;
+		}
+		
+		try {
+			String sql = "SELECT user_id FROM users WHERE user_id = ? AND password = ?";
+			PreparedStatement pStatement = connection.prepareStatement(sql);
+			pStatement.setString(1, userId);
+			pStatement.setString(2, password);
+
+			ResultSet rs = pStatement.executeQuery();
+			if (rs.next()) {
+				return true;
+			}
+
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+		}
+	
+		return false;
+	}
+}

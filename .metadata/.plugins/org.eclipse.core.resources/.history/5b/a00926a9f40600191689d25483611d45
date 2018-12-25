@@ -1,0 +1,21 @@
+package db.mysql;
+
+import java.sql.DriverManager;
+
+import com.sun.jdi.connect.spi.Connection;
+
+public class MySQLTableCreation {
+	private Connection connection;
+
+	public MySQLConnection() {
+		try {
+			Class.forName("com.mysql.cj.jdbc.Driver");
+			connection = DriverManager.getConnection(MySQLDBUtil.URL);
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+}
