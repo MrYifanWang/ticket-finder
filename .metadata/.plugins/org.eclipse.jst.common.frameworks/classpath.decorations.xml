@@ -1,0 +1,7 @@
+<classpath>
+  <container id="Ticket!org.eclipse.jst.j2ee.internal.web.container">
+    <entry id="/Users/yifanw/Documents/projects/tickerfinder/Ticket/WebContent/WEB-INF/lib/mongo-java-driver-3.9.1.jar">
+      <source-attachment-path>/Users/yifanw/Documents/projects/tickerfinder/Ticket/WebContent/WEB-INF/lib</source-attachment-path>
+    </entry>
+  </container>
+</classpath>

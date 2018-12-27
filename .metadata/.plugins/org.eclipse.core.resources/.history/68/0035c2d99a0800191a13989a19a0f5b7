@@ -1,0 +1,18 @@
+package db.mongodb;
+
+public class MongoDBTableCreation {
+	// Run as Java application to create MongoDB collections with index.
+	public static void main(String[] args) {
+
+		// Step 1, connetion to MongoDB
+
+		// Step 2, remove old collections.
+
+		// Step 3, create new collections
+
+		// Step 4, insert fake user data and create index.
+
+		System.out.println("Import is done successfully.");
+
+	}
+}
